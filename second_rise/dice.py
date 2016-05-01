@@ -1,11 +1,12 @@
 import random
 
+
 class Die(object):
     """ Represents a die.  The die is '.roll()'ed to determine a random value
 
     Attributes:
-        sides: an integer representing the number of sides on the die.
-        result: an integer representing the last rolled value of the die.
+        _sides: an integer representing the number of sides on the die.
+        _result: an integer representing the last rolled value of the die.
 
     To Do:
         Add result history.
@@ -47,7 +48,7 @@ class Die(object):
 
     def roll(self):
         """ 'Roll' the dice and store the result. """
-        self._result = random.randint(1,self._sides)
+        self._result = random.randint(1, self._sides)
 
 
 class D10(Die):
@@ -93,7 +94,7 @@ class Percentile(object):
         # alternate use.
         if minimum != 0:
             minimum = 1
-        self._minimum=minimum
+        self._minimum = minimum
         self._dice = []
         self._dice.append(D10())
         self._dice.append(D10())
@@ -160,7 +161,7 @@ class Percentile(object):
         # Check if an all 10s result was rolled.  On physical dice,
         # that would correspond to an all-zeros roll, which is either a maximum
         # or minimum roll, depending on whether the minimum roll is 0 or 1.
-        max = True
+        maximum = True
         multiplier = 1
         total = 0
         for die in self._dice:
@@ -170,14 +171,14 @@ class Percentile(object):
             # for its digit.  <8> and <10> should represent an 80, not a 90.
             die_value = die.result
             if die_value != die.sides:
-                max = False
+                maximum = False
             else:
                 die_value = 0
             # Add the die to the overall total, adjusting for digit represented
             total += die_value * multiplier
             # Adjust the multiplier to represent the next digit
             multiplier *= 10
-        if max:
+        if maximum:
             if self._minimum == 0:
                 return 0
             else:
@@ -185,16 +186,18 @@ class Percentile(object):
         else:
             return total
 
-class D1000(Percentile):
-     """ A compound dice for generating 0-999 or 1-1000 using three d10."""
-     def __init__(self):
-         Percentile.__init__(self)
-         self._dice.append(D10())
 
-     @property
-     def hundreds(self):
-         """ Return the d10 used for the hundreds-digit. """
-         return self._dice[2]
+class D1000(Percentile):
+    """ A compound dice for generating 0-999 or 1-1000 using three d10."""
+    def __init__(self):
+        Percentile.__init__(self)
+        self._dice.append(D10())
+
+    @property
+    def hundreds(self):
+        """ Return the d10 used for the hundreds-digit. """
+        return self._dice[2]
+
 
 class D10000(D1000):
     """ A compound dice for generating 0-9999 or 1-10000 using four d10."""
@@ -206,14 +209,3 @@ class D10000(D1000):
     def thousands(self):
         """ Return the d10 used for the hundreds-digit. """
         return self._dice[3]
-
-
-
-
-
-
-
-
-
-
-
