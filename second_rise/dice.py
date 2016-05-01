@@ -95,8 +95,8 @@ class Percentile(object):
             minimum = 1
         self._minimum=minimum
         self._dice = []
-        self._dice[0] = D10()
-        self._dice[1] = D10()
+        self._dice.append(D10())
+        self._dice.append(D10())
 
     def roll(self):
         """ Rolls both d10 to generate a percentile score. """
@@ -108,7 +108,7 @@ class Percentile(object):
         """ Check to see if both dice have been rolled """
         answer = True
         for die in self._dice:
-            if not die.roller:
+            if not die.rolled:
                 answer = False
         return answer
 
@@ -166,7 +166,7 @@ class Percentile(object):
         for die in self._dice:
             # Check for a maximum value
             if die.result != die.sides:
-                max == False
+                max = False
             # Add the die to the overall total, adjusting for digit represented
             total += die.result * multiplier
             # Adjust the multiplier to represent the next digit
