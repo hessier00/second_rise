@@ -165,23 +165,47 @@ class Percentile(object):
         total = 0
         for die in self._dice:
             # Check for a maximum value
-            if die.result != die.sides:
+            # If the individual die is _not_ a max, than the total can't be
+            # either.  However, if it _is_, treat the dice as a zero value
+            # for its digit.  <8> and <10> should represent an 80, not a 90.
+            die_value = die.result
+            if die_value != die.sides:
                 max = False
+            else:
+                die_value = 0
             # Add the die to the overall total, adjusting for digit represented
-            total += die.result * multiplier
+            total += die_value * multiplier
             # Adjust the multiplier to represent the next digit
             multiplier *= 10
-        if max and self._minimum == 0:
-            return 0
+        if max:
+            if self._minimum == 0:
+                return 0
+            else:
+                return self.sides
         else:
             return total
 
- # class D1000(Percentile):
-#     """ A compound dice for generating 0-999 or 1-1000 using three d10."""
-#     def __init__(self):
-#         Percentile.__init__(self)
-#         self._hundreds = D10()
-#
+class D1000(Percentile):
+     """ A compound dice for generating 0-999 or 1-1000 using three d10."""
+     def __init__(self):
+         Percentile.__init__(self)
+         self._dice.append(D10())
+
+     @property
+     def hundreds(self):
+         """ Return the d10 used for the hundreds-digit. """
+         return self._dice[2]
+
+class D10000(D1000):
+    """ A compound dice for generating 0-9999 or 1-10000 using four d10."""
+    def __init__(self):
+        D1000.__init__(self)
+        self._dice.append(D10())
+
+    @property
+    def thousands(self):
+        """ Return the d10 used for the hundreds-digit. """
+        return self._dice[3]
 
 
 
