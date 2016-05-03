@@ -10,6 +10,8 @@ class Die(object):
 
     To Do:
         Add result history.
+        __str__()
+        __unicode__()
     """
     _sides = 0
     _result = 0
@@ -87,6 +89,16 @@ class Percentile(object):
     """ A compound dice construct, using two D10 objects to generate a range
     of results from either 0-99 or 1-100, using one die as the tens digit and
     one die as the ones digit.
+
+    Attributes:
+        _minimum: an integer representing the the minimum value of a roll -
+        either 1 or 0.
+        _dice: a list holding the individual Die objects that comprise the
+        compound dice construct.
+
+    To Do:
+        __str__()
+        __unicode__()
     """
     def __init__(self, minimum=1):
         # Minimum can only be 0 or 1.  Some systems use percentile dice to
