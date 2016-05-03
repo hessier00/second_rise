@@ -1,5 +1,6 @@
 import dice
 import range
+import dice_set
 
 print("Testing: dice")
 test = dice.Die("b")
@@ -230,4 +231,40 @@ count = 1
 for die in test.dice:
     print('        test = range.Range(1, 6) - die {}: {}'
           .format(count, die.result))
+    count += 1
+
+print('Testing dice_set...')
+test = dice_set.DiceSet()
+print('    Created but no dice added...')
+print('        test = dice_set.DiceSet() - rolled: {}'.format(test.rolled))
+print('        test = dice_set.DiceSet() - valid = {}'.format(test.valid))
+print('        test = dice_set.DiceSet() - result: {}'.format(test.result))
+print('        test = dice_set.DiceSet() - dice count: {}'
+      .format(test.dice_count))
+test.add_die(dice.D10())
+test.add_die(dice.D10())
+test.add_die(dice.D10())
+test.add_die(dice.D5())
+test.add_die(dice.D5())
+test.add_die(dice.D2())
+print('    3d10, 2d5, 1d2 added, but not rolled...')
+print('        Rolled: {}'.format(test.rolled))
+print('         Valid = {}'.format(test.valid))
+print('        Result: {}'.format(test.result))
+print('       Dice count: {}'.format(test.dice_count))
+count = 1
+for die in test.dice:
+    print('        Die {} ({}-sider): {}'
+          .format(count, die.sides, die.result))
+    count += 1
+test.roll()
+print('    Rolled...')
+print('        Rolled: {}'.format(test.rolled))
+print('         Valid = {}'.format(test.valid))
+print('        Result: {}'.format(test.result))
+print('       Dice count: {}'.format(test.dice_count))
+count = 1
+for die in test.dice:
+    print('        Die {} ({}-sider): {}'
+          .format(count, die.sides, die.result))
     count += 1
