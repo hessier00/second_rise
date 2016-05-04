@@ -268,3 +268,4 @@ for die in test.dice:
     print('        Die {} ({}-sider): {}'
           .format(count, die.sides, die.result))
     count += 1
+test.build_results_table()
