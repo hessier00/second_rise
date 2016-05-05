@@ -249,9 +249,9 @@ test.add_die(dice.D5())
 test.add_die(dice.D2())
 print('    3d10, 2d5, 1d2 added, but not rolled...')
 print('        Rolled: {}'.format(test.rolled))
-print('         Valid = {}'.format(test.valid))
+print('        Valid = {}'.format(test.valid))
 print('        Result: {}'.format(test.result))
-print('       Dice count: {}'.format(test.dice_count))
+print('        Dice count: {}'.format(test.dice_count))
 count = 1
 for die in test.dice:
     print('        Die {} ({}-sider): {}'
@@ -260,12 +260,79 @@ for die in test.dice:
 test.roll()
 print('    Rolled...')
 print('        Rolled: {}'.format(test.rolled))
-print('         Valid = {}'.format(test.valid))
+print('        Valid = {}'.format(test.valid))
 print('        Result: {}'.format(test.result))
-print('       Dice count: {}'.format(test.dice_count))
+print('        Dice count: {}'.format(test.dice_count))
 count = 1
 for die in test.dice:
     print('        Die {} ({}-sider): {}'
           .format(count, die.sides, die.result))
     count += 1
-test.build_results_table()
+test.build_stats()
+print('    A smaller dice set (2d10)...')
+test = dice_set.DiceSet()
+test.add_die(dice.D10())
+test.add_die(dice.D10())
+test.roll()
+print('        Rolled: {}'.format(test.rolled))
+print('        Valid = {}'.format(test.valid))
+print('        Result: {}'.format(test.result))
+print('        Dice count: {}'.format(test.dice_count))
+count = 1
+for die in test.dice:
+    print('        Die {} ({}-sider): {}'
+          .format(count, die.sides, die.result))
+    count += 1
+test.build_stats()
+print('    Classic D&D dice (3d6)...')
+test = dice_set.DiceSet()
+test.add_die(dice.Die(6))
+test.add_die(dice.Die(6))
+test.add_die(dice.Die(6))
+test.roll()
+print('        Rolled: {}'.format(test.rolled))
+print('        Valid = {}'.format(test.valid))
+print('        Result: {}'.format(test.result))
+print('        Dice count: {}'.format(test.dice_count))
+count = 1
+for die in test.dice:
+    print('        Die {} ({}-sider): {}'
+          .format(count, die.sides, die.result))
+    count += 1
+test.build_stats()
+print(test.stats.chance_of(12))
+print('    A modified dice set (2d10+5)...')
+test = dice_set.DiceSet()
+test.add_die(dice.D10())
+test.add_die(dice.D10())
+test.modifier = 5
+test.modifier_operation = dice_set.MOD_OPERATORS['PLUS']
+test.roll()
+print('        Rolled: {}'.format(test.rolled))
+print('        Valid = {}'.format(test.valid))
+print('        Result: {}'.format(test.result))
+print('        Dice count: {}'.format(test.dice_count))
+count = 1
+for die in test.dice:
+    print('        Die {} ({}-sider): {}'
+          .format(count, die.sides, die.result))
+    count += 1
+test.build_stats()
+print('    A weird modified dice set (3d7*3)...')
+test = dice_set.DiceSet()
+test.add_die(dice.Die(7))
+test.add_die(dice.Die(7))
+test.add_die(dice.Die(7))
+test.modifier = 3
+test.modifier_operation = dice_set.MOD_OPERATORS['*']
+test.roll()
+print('        Rolled: {}'.format(test.rolled))
+print('        Valid = {}'.format(test.valid))
+print('        Result: {}'.format(test.result))
+print('        Dice count: {}'.format(test.dice_count))
+count = 1
+for die in test.dice:
+    print('        Die {} ({}-sider): {}'
+          .format(count, die.sides, die.result))
+    count += 1
+test.build_stats()
