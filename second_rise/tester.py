@@ -1,9 +1,9 @@
 import dice
-import range
+import dice_range
 import dice_set
 
 print("Testing: dice")
-test = dice.Die("b")
+test = dice.Die(0)
 print('    test = dice.Die("b") - valid = {}'.format(test.valid))
 test = dice.Die(1-5)
 print('    test = dice.Die(1-5) - valid = {}'.format(test.valid))
@@ -158,78 +158,78 @@ print('            ones (test.ones.result) - {}'.format(test.ones.result))
 
 
 print('Testing: range')
-test = range.Range(2, 20)
+test = dice_range.Range(2, 20)
 print('    Created but not rolled...')
-print('        test = range.Range(2, 20) - rolled: {}'.format(test.rolled))
-print('        test = range.Range(2, 20) - result: {}'.format(test.result))
-print('        test = range.Range(2, 20) - dice count: {}'
+print('        test = dice_range.Range(2, 20) - rolled: {}'.format(test.rolled))
+print('        test = dice_range.Range(2, 20) - result: {}'.format(test.result))
+print('        test = dice_range.Range(2, 20) - dice count: {}'
       .format(test.dice_count))
 test.roll()
 
 print('    Rolled...')
-print('        test = range.Range(2, 20) - rolled: {}'.format(test.rolled))
-print('        test = range.Range(2, 20) - result: {}'.format(test.result))
-print('        test = range.Range(2, 20) - dice count: {}'
+print('        test = dice_range.Range(2, 20) - rolled: {}'.format(test.rolled))
+print('        test = dice_range.Range(2, 20) - result: {}'.format(test.result))
+print('        test = dice_range.Range(2, 20) - dice count: {}'
       .format(test.dice_count))
 count = 1
 for die in test.dice:
-    print('        test = range.Range(2,20) - die {}: {}'
+    print('        test = dice_range.Range(2,20) - die {}: {}'
           .format(count, die.result))
     count += 1
 
-test = range.Range(4, 27)
+test = dice_range.Range(4, 27)
 print('    Creating a range with more dice but a low max, not yet rolled...')
-print('        test = range.Range(4, 27) - rolled: {}'.format(test.rolled))
-print('        test = range.Range(4, 27) - result: {}'.format(test.result))
-print('        test = range.Range(4, 27) - dice count: {}'
+print('        test = dice_range.Range(4, 27) - rolled: {}'.format(test.rolled))
+print('        test = dice_range.Range(4, 27) - result: {}'.format(test.result))
+print('        test = dice_range.Range(4, 27) - dice count: {}'
       .format(test.dice_count))
 test.roll()
 print('    Rolled...')
-print('        test = range.Range(4, 27) - rolled: {}'.format(test.rolled))
-print('        test = range.Range(4, 27) - result: {}'.format(test.result))
-print('        test = range.Range(4, 27) - dice count: {}'
+print('        test = dice_range.Range(4, 27) - rolled: {}'.format(test.rolled))
+print('        test = dice_range.Range(4, 27) - result: {}'.format(test.result))
+print('        test = dice_range.Range(4, 27) - dice count: {}'
       .format(test.dice_count))
 count = 1
 for die in test.dice:
-    print('        test = range.Range(4, 27) - die {}: {}'
+    print('        test = dice_range.Range(4, 27) - die {}: {}'
           .format(count, die.result))
     count += 1
 
-test = range.Range(12, 18, 2)
+test = dice_range.Range(12, 18, 2)
 print('    Creating a range with a minimum higher than the dice count, '
       'not yet rolled...')
-print('        test = range.Range(12, 18, 2) - rolled: {}'.format(test.rolled))
-print('        test = range.Range(12, 18, 2) - result: {}'.format(test.result))
-print('        test = range.Range(12, 18, 2) - dice count: {}'
+print('        test = dice_range.Range(12, 18, 2) - rolled: {}'.format(test.rolled))
+print('        test = dice_range.Range(12, 18, 2) - result: {}'.format(test.result))
+print('        test = dice_range.Range(12, 18, 2) - dice count: {}'
       .format(test.dice_count))
 test.roll()
 print('    Rolled...')
-print('        test = range.Range(12, 18, 2) - rolled: {}'.format(test.rolled))
-print('        test = range.Range(12, 18, 2) - result: {}'.format(test.result))
-print('        test = range.Range(12, 18, 2) - dice count: {}'
+print('        test = dice_range.Range(12, 18, 2) - rolled: {}'.format(test.rolled))
+print('        test = dice_range.Range(12, 18, 2) - result: {}'.format(test.result))
+print('        test = dice_range.Range(12, 18, 2) - dice count: {}'
       .format(test.dice_count))
 count = 1
 for die in test.dice:
-    print('        test = range.Range(12, 18, 2) - die {}: {}'
+    print('        test = dice_range.Range(12, 18, 2) - die {}: {}'
           .format(count, die.result))
     count += 1
 
-test = range.Range(1, 6)
+test = dice_range.Range(1, 6)
 print('    Creating a range with a low maximum and a single die, '
       'not yet rolled...')
-print('        test = range.Range(1, 6) - rolled: {}'.format(test.rolled))
-print('        test = range.Range(1, 6) - result: {}'.format(test.result))
-print('        test = range.Range(1, 6) - dice count: {}'
+print('        test = dice_range.Range(1, 6) - rolled: {}'.format(test.rolled))
+print('        test = dice_range.Range(1, 6) - result: {}'.format(test.result))
+print('        test = dice_range.Range(1, 6) - dice count: {}'
       .format(test.dice_count))
 test.roll()
 print('    Rolled...')
-print('        test = range.Range(1, 6) - rolled: {}'.format(test.rolled))
-print('        test = range.Range(1, 6) - result: {}'.format(test.result))
-print('        test = range.Range(1, 6) - dice count: {}'
+print('        test = dice_range.Range(1, 6) - rolled: {}'.format(test.rolled))
+print('        test = dice_range.Range(1, 6) - result: {}'.format(test.result))
+print('        test = dice_range.Range(1, 6) - dice count: {}'
       .format(test.dice_count))
 count = 1
 for die in test.dice:
-    print('        test = range.Range(1, 6) - die {}: {}'
+    print('        test = dice_range.Range(1, 6) - die {}: {}'
           .format(count, die.result))
     count += 1
 
@@ -336,3 +336,24 @@ for die in test.dice:
           .format(count, die.sides, die.result))
     count += 1
 test.build_stats()
+
+print('Testing dice history...')
+test=dice.D10()
+print('    d10 rolled 5 times')
+for i in range(1, 6):
+    test.roll()
+print('        result: {}'.format(test.result))
+print('        history: {}'.format(test.history))
+print('        d10 __str__: {}'.format(test))
+print('        verbose: {}'.format(test.__str__(True)))
+test=dice.D10000()
+print('    d10000 rolled 5 times')
+for i in range(1, 6):
+    test.roll()
+print('        result: {}'.format(test.result))
+print('        history: {}'.format(test.history))
+print('        d10000 __str__: {}'.format(test))
+print('        verbose: {}'.format(test.__str__(True)))
+print('    Clearing history...')
+test.clear_history()
+print('        history: {}'.format(test.history))

@@ -9,13 +9,9 @@ class Die(object):
         _result: an integer representing the last rolled value of the die.
 
     To Do:
-        Add result history.
-        __str__()
-        __unicode__()
+        Add result _future_, and undo/redo (future is what the current roll
+        would become if you undo to a step back in _history.
     """
-    _sides = 0
-    _result = 0
-
     def __init__(self, sides):
         """ Build a new die.  Ignore all 'sides' argument values other than but
         positive integers.  For invalid 'sides' arguments, set the side count to
@@ -24,9 +20,11 @@ class Die(object):
         Arguments:
             sides (int): the number of sides on the die.
         """
-        if isinstance(sides, int):
-            if sides > 0:
-                self._sides = sides
+        self._sides = 0
+        self._result = 0
+        if sides > 0:
+            self._sides = sides
+        self._history = []
 
     @property
     def valid(self):
@@ -49,8 +47,35 @@ class Die(object):
         return self._result
 
     def roll(self):
-        """ 'Roll' the dice and store the result. """
+        """ 'Roll' the dice and store the result. move any previous results
+        to the die's history.
+        """
+        if self._result:
+            self._history.append(self._result)
         self._result = random.randint(1, self._sides)
+
+    @property
+    def history(self):
+        return self._history
+
+    def clear_history(self):
+        """ Clears the die' roll history. """
+        self._history = []
+
+    def __str__(self, verbose=False):
+        """ Return either the die value as a string (terse) or a more
+        detailed response (verbose).
+
+        Arguments:
+            verbose: a boolean value representing whether or not the return
+            value should be verbose.
+        """
+        if not verbose:
+            return str(self._result)
+        return 'd{}: {}'.format(self._sides, self._result)
+
+    def __unicode__(self, verbose=False):
+        return self.__str__(verbose)
 
 
 class D10(Die):
@@ -97,8 +122,8 @@ class Percentile(object):
         compound dice construct.
 
     To Do:
-        __str__()
-        __unicode__()
+        Add result _future_, and undo/redo (future is what the current roll
+        would become if you undo to a step back in _history.
     """
     def __init__(self, minimum=1):
         # Minimum can only be 0 or 1.  Some systems use percentile dice to
@@ -110,9 +135,12 @@ class Percentile(object):
         self._dice = []
         self._dice.append(D10())
         self._dice.append(D10())
+        self._history = []
 
     def roll(self):
         """ Rolls both d10 to generate a percentile score. """
+        if self.rolled:
+            self._history.append(self.result)
         for die in self._dice:
             die.roll()
 
@@ -197,6 +225,32 @@ class Percentile(object):
                 return self.sides
         else:
             return total
+
+    @property
+    def history(self):
+            return self._history
+
+    def clear_history(self):
+        """ Clears the die's roll history. """
+        self._history = []
+
+    def __str__(self, verbose=False):
+        """ Return either the die value as a string (terse) or a more
+        detailed response (verbose).
+
+        Arguments:
+            verbose: a boolean value representing whether or not the return
+            value should be verbose.
+        """
+        if not verbose:
+            return str(self.result)
+        side_count = 1
+        for die in self._dice:
+            side_count *= die.sides
+        return 'd{}: {}'.format(side_count, self.result)
+
+    def __unicode__(self, verbose=False):
+        return self.__str__(verbose)
 
 
 class D1000(Percentile):
