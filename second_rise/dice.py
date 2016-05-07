@@ -50,8 +50,8 @@ class Die(object):
         """ 'Roll' the dice and store the result. move any previous results
         to the die's history.
         """
-        if self._result:
-            self._history.append(self._result)
+        if self.rolled:
+            self._history.append(self.result)
         self._result = random.randint(1, self._sides)
 
     @property

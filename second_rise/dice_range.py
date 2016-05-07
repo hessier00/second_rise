@@ -1,5 +1,6 @@
 import dice
 
+
 class Range(object):
     """ Represents a dice-result range, constructed from modifiers and one or
     more d10.
@@ -13,10 +14,9 @@ class Range(object):
         within the range.
 
     To Do:
-        Add result history.
-        result probability table
-        __str__()
-        __unicode__()
+        Add result _future_, and undo/redo (future is what the current roll
+        would become if you undo to a step back in _history.
+        Add result probability table.
     """
 
     def __init__(self, minimum, maximum, dice_count=0):
@@ -31,6 +31,7 @@ class Range(object):
         self._dice = []
         for i in range(0, dice_count):
             self._dice.append(dice.D10())
+        self._history = []
 
     @property
     def minimum(self):
@@ -79,6 +80,8 @@ class Range(object):
 
     def roll(self):
         """ Rolls both d10 to generate a percentile score. """
+        if self.rolled:
+            self._history.append(self.result)
         for die in self._dice:
             die.roll()
 
@@ -111,3 +114,29 @@ class Range(object):
         if 0 < total <= self._minimum:
             total = self.minimum
         return total
+
+    @property
+    def history(self):
+        return self._history
+
+    def clear_history(self):
+        """ Clears the die's roll history. """
+        self._history = []
+
+    def __str__(self, verbose=False):
+        """ Return either the die value as a string (terse) or a more
+        detailed response (verbose).
+
+        Arguments:
+            verbose: a boolean value representing whether or not the return
+            value should be verbose.
+        """
+        if not verbose:
+            return str(self.result)
+        return 'range {}-{} (using {}d10): {}'.format(self.minimum,
+                                                      self.maximum,
+                                                      self.dice_count,
+                                                      self.result)
+
+    def __unicode__(self, verbose=False):
+        return self.__str__(verbose)

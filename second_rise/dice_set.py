@@ -2,6 +2,7 @@ import dice
 import operator
 import copy
 
+
 # Constants
 MOD_OPERATORS = {'PLUS': operator.add,
                  'MINUS': operator.sub,
