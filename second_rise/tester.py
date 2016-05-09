@@ -1,5 +1,4 @@
 import dice
-import dice_range
 import dice_set
 
 print("Testing: dice")
@@ -158,7 +157,7 @@ print('            ones (test.ones.result) - {}'.format(test.ones.result))
 
 
 print('Testing: range')
-test = dice_range.Range(2, 20)
+test = dice.Range(2, 20)
 print('    Created but not rolled...')
 print('        test = dice_range.Range(2, 20) - rolled: {}'.format(test.rolled))
 print('        test = dice_range.Range(2, 20) - result: {}'.format(test.result))
@@ -177,7 +176,7 @@ for die in test.dice:
           .format(count, die.result))
     count += 1
 
-test = dice_range.Range(4, 27)
+test = dice.Range(4, 27)
 print('    Creating a range with more dice but a low max, not yet rolled...')
 print('        test = dice_range.Range(4, 27) - rolled: {}'.format(test.rolled))
 print('        test = dice_range.Range(4, 27) - result: {}'.format(test.result))
@@ -195,7 +194,7 @@ for die in test.dice:
           .format(count, die.result))
     count += 1
 
-test = dice_range.Range(12, 18, 2)
+test = dice.Range(12, 18, 2)
 print('    Creating a range with a minimum higher than the dice count, '
       'not yet rolled...')
 print('        test = dice_range.Range(12, 18, 2) - rolled: {}'.format(test.rolled))
@@ -214,7 +213,7 @@ for die in test.dice:
           .format(count, die.result))
     count += 1
 
-test = dice_range.Range(1, 6)
+test = dice.Range(1, 6)
 print('    Creating a range with a low maximum and a single die, '
       'not yet rolled...')
 print('        test = dice_range.Range(1, 6) - rolled: {}'.format(test.rolled))
@@ -339,7 +338,7 @@ test.build_stats()
 
 print('Testing dice history...')
 test = dice.D10()
-print('    d10 rolled 5 times')
+print('    d10 rolled 5 times...')
 for i in range(1, 6):
     test.roll()
 print('        result: {}'.format(test.result))
@@ -347,7 +346,7 @@ print('        history: {}'.format(test.history))
 print('        d10 __str__: {}'.format(test))
 print('        verbose: {}'.format(test.__str__(True)))
 test = dice.D10000()
-print('    d10000 rolled 5 times')
+print('    d10000 rolled 5 times...')
 for i in range(1, 6):
     test.roll()
 print('        result: {}'.format(test.result))
@@ -357,8 +356,8 @@ print('        verbose: {}'.format(test.__str__(True)))
 print('    Clearing history...')
 test.clear_history()
 print('        history: {}'.format(test.history))
-test = dice_range.Range(3,22,3)
-print('    range 3-22 (3D10) rolled 5 times')
+test = dice.Range(3,22,3)
+print('    range 3-22 (3D10) rolled 5 times...')
 for i in range(1, 6):
     test.roll()
 print('        result: {}'.format(test.result))
@@ -368,3 +367,99 @@ print('        verbose: {}'.format(test.__str__(True)))
 print('    Clearing history...')
 test.clear_history()
 print('        history: {}'.format(test.history))
+
+print('Back to testing dice_sets...')
+print('History and __str__() this time...')
+print('    2d10+1d5 rolled 5 times...')
+test = dice_set.DiceSet()
+test.add_die(dice.D10())
+test.add_die(dice.D10())
+test.add_die(dice.D5())
+for i in range(1, 6):
+    test.roll()
+print('        result: {}'.format(test.result))
+print('        history: {}'.format(test.history))
+print('        set 2d10 + 1d5 __str__: {}'.format(test))
+print('        verbose: {}'.format(test.__str__(True)))
+test.build_stats()
+print('        stats(verbose): {}'.format(test.stats.__str__(True)))
+print('    Clearing history...')
+test.clear_history()
+print('        history: {}'.format(test.history))
+print('    d10+d5+d2+d4+d10+d20+d4+d5+d10 rolled 5 times...')
+test = dice_set.DiceSet()
+test.add_die(dice.D10())
+test.add_die(dice.D5())
+test.add_die(dice.D2())
+test.add_die(dice.Die(4))
+test.add_die(dice.D10())
+test.add_die(dice.Die(20))
+test.add_die(dice.Die(4))
+test.add_die(dice.D5())
+test.add_die(dice.D10())
+for i in range(1, 6):
+    test.roll()
+print('        result: {}'.format(test.result))
+print('        history: {}'.format(test.history))
+print('        set 1d20 + 3d10 + 2d5 + 2d4+ 1d2 __str__: {}'.format(test))
+print('        verbose: {}'.format(test.__str__(True)))
+for die in test.dice:
+    print('Average for d{} is {}'.format(die.sides,die.average))
+print('Testing Diedometer...')
+test = dice_set.DiceSet()
+test.add_die(dice.D10())
+test.add_die(dice.D10())
+test.add_die(dice.D5())
+print('    meter = dice.set.Diedometer([die.D10(), die.D10(), die.D5()]')
+meter = dice_set.Diedometer(test.dice)
+print('    meter: {}'.format(meter.meter))
+print('    incrementing...')
+while not meter.finished:
+    meter.increment()
+    print('        meter: {}'.format(meter.meter))
+meter.reset()
+print('    Again, this time with totals....')
+print('    meter: {}'.format(meter.meter))
+print('    incrementing...')
+while not meter.finished:
+    meter.increment()
+    print('        meter: {}: {}'.format(meter.meter, meter.result))
+meter.reset()
+print('    Again, this time with a max result of 20....')
+print('    meter: {}'.format(meter.meter))
+print('    incrementing...')
+while not meter.finished:
+    meter.increment()
+    while meter.result > 20:
+        meter.drop_die()
+    print('        meter: {}: {} (dropped: {}'.format(meter.meter,
+                                                      meter.result,
+                                                      meter.dropped_dice))
+meter.reset()
+print('    Again, this time with a max result of 12....')
+print('    meter: {}'.format(meter.meter))
+print('    incrementing...')
+while not meter.finished:
+    meter.increment()
+    while meter.result > 12:
+        meter.drop_die()
+    print('        meter: {}: {} (dropped: {}'.format(meter.meter,
+                                                      meter.result,
+                                                      meter.dropped_dice))
+print('    One last time, with a large dice set (6d10) and a low limit (35....')
+test = dice_set.DiceSet()
+for i in range(0,6):
+    test.add_die(dice.D10())
+meter = dice_set.Diedometer(test.dice)
+print('    meter: {}'.format(meter.meter))
+print('    incrementing...')
+while not meter.finished:
+    meter.increment()
+    while meter.result > 35:
+        meter.drop_die()
+    # print('        meter: {}: {} (dropped: {}'.format(meter.meter,
+    #                                                   meter.result,
+    #                                                   meter.dropped_dice))
+print('    done...')
+
+

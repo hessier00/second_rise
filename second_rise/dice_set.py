@@ -29,11 +29,11 @@ class DiceSet(object):
         dice set.
 
     To Do:
-        add roll history
+        Add result _future_, and undo/redo (future is what the current roll
+        would become if you undo to a step back in _history.
         add parsing of standard dice notation
         add parameter for a list of Die objects
-        Automatically build_stats if dice populated at construction time.
-        add verbose (table) and terse (die notation only) version of __str__()
+
         handle modified results less than 0 (or 1?)
     """
 
@@ -42,6 +42,10 @@ class DiceSet(object):
         self._modifier = 0
         self._modifier_operation = MOD_OPERATORS['PLUS']
         self._stats = None
+        self._history = []
+        # Automatically build_stats if dice populated at construction time.
+        if self._dice:
+            self.build_stats()
 
     @property
     def dice(self):
@@ -70,6 +74,11 @@ class DiceSet(object):
         self._dice.append(die)
 
     def roll(self):
+        """ Roll all the dice in the set, saving any previous results as
+        history.
+        """
+        if self.rolled:
+            self._history.append(self.result)
         for die in self._dice:
             die.roll()
 
@@ -88,6 +97,8 @@ class DiceSet(object):
 
     @property
     def valid(self):
+        if not self._dice:
+            return False
         for die in self._dice:
             return die.valid
 
@@ -102,19 +113,54 @@ class DiceSet(object):
             self._stats = SetStats(self._dice,
                                    self._modifier_operation,
                                    self._modifier)
-        print(self._stats.csv())
 
     @property
     def stats(self):
-        """ Return the dice set's stats dictionary. Will result in an error
-        if the dice set has not been populated with dice and build_stats()
-        has not been run.
-
-        To Do:
-            Return a safe-default SetStats object if the stats have not yet
-            been generated.  Maybe.
-        """
+        """ Return the dice set's stats dictionary. """
         return self._stats
+
+    @property
+    def history(self):
+        return self._history
+
+    def clear_history(self):
+        """ Clears the die's roll history. """
+        self._history = []
+
+    def describe_dice(self):
+        """ Generate a string description of the dice in the set using
+        standard dice notation, i.e. '3d10+4d6+3d5' """
+        if not self.valid:
+            return ""
+        dice_counts = {}
+        for die in self._dice:
+            if die.sides not in dice_counts.keys():
+                dice_counts[die.sides] = 1
+            else:
+                dice_counts[die.sides] += 1
+        dice_list = []
+        for die_type in dice_counts:
+            dice_list.append([die_type, dice_counts[die_type]])
+            dice_list.sort(reverse=True)
+        description = '{}d{}'.format(dice_list[0][1], dice_list[0][0])
+        for die_type in dice_list[1:]:
+            description += '+{}d{}'.format(die_type[1], die_type[0])
+        return description
+
+    def __str__(self, verbose=False):
+        """ Return either the die value as a string (terse) or a more
+        detailed response (verbose).
+
+        Arguments:
+            verbose: a boolean value representing whether or not the return
+            value should be verbose.
+        """
+        if not verbose:
+            return str(self.result)
+        return '{}: {}'.format(self.describe_dice(), self.result)
+
+    def __unicode__(self, verbose=False):
+        return self.__str__(verbose)
 
 
 class SetStats(object):
@@ -131,14 +177,19 @@ class SetStats(object):
         roll combinations
 
     To Do:
-        add verbose (table) and terse (die notation only) version of __str__()
+        improve sorting
+        combine _generate_combos and build_dict to be more memory friendly -
+        use "odometer" concept.
     """
 
     def __init__(self, dice, mod_op=MOD_OPERATORS['PLUS'], modifier=0):
         self._stats_dict = {}
         self._combinations = []
+        self._combo_count = 0
+        self._average = 0
         self._generate_combos(dice)
         self._build_dict(mod_op, modifier)
+        self._calculate_average()
 
     def _generate_combos(self, dice):
         """ Generate all combinations of dice rolls possible for the dice
@@ -187,7 +238,6 @@ class SetStats(object):
         if not self._combinations:
             return
         for row in self._combinations:
-            # print(str(row))
             row[0] = mod_op(sum(row[1:]), modifier)
             if row[0] not in self._stats_dict.keys():
                 self._stats_dict[row[0]] = {'count': 1, 'chance': 0.0}
@@ -196,6 +246,25 @@ class SetStats(object):
         for key in self._stats_dict:
             self._stats_dict[key]['chance'] = \
                 self._stats_dict[key]['count'] / self._combo_count
+
+    def _calculate_average(self):
+        """ Calculate the average roll result for the dice_set and store it. """
+        if not self._stats_dict:
+            return
+        total = 0
+        for result in self._stats_dict:
+            total += (result * self._stats_dict[result]['count'])
+        average = total / self._combo_count
+        #print('Average: {}'.format(average))
+        self._average = average
+
+    @property
+    def combo_count(self):
+        return self._combo_count
+
+    @property
+    def average(self):
+        return self._average
 
     def chance_of(self, result):
         """ Return the chance of rolling a particular result with the dice
@@ -221,15 +290,113 @@ class SetStats(object):
                                self._stats_dict[key]['chance']))
         return output
 
-    def __str__(self):
+    def __str__(self, verbose=False):
         """ Return a human-readable version of of the stats dictionary."""
-        output = 'Dice combinations: {}\n'.format(self._combo_count)
-        for key in self._stats_dict:
-            output += ('{}: {} - {:.2%}\n'
-                       .format(key,
-                               self._stats_dict[key]['count'],
-                               self._stats_dict[key]['chance']))
+        output = 'Roll-result average: {}'.format(self._average)
+        if verbose:
+            output += '\nDice combinations: {}\n'.format(self._combo_count)
+            for key in self._stats_dict:
+                output += ('{}: {} - {:.2%}\n'
+                           .format(key,
+                                   self._stats_dict[key]['count'],
+                                   self._stats_dict[key]['chance']))
         return output
 
-    def __unicode__(self):
-        self.__str__()
+    def __unicode__(self, verbose=False):
+        self.__str__(verbose)
+
+
+class Diedometer(object):
+    """ Holds a set of dice and can iterate through possible
+    combinations of those dice in the same way an odometer iterates
+    through all combinations of side of its dials.
+
+    Attributes:
+        _dice: a list of Die objects containing the dice assigned to the
+        diedomoeter.
+        _maximums: a list of the maximum values of each die assigned to the
+        diedomoter.
+        _meter: a list of integer values used to represent a set of die
+        states (die 1 = 3, die 2 = 6, etc.).
+        _dropped_dice_count: an integer representing the number of dice
+        dropped out of the count when totalling the meter's current state.
+        The die dropped will always be the die (or one of the dice) with the
+        lowest value.
+
+    To Do:
+        minimums
+        maximums and drop dice
+    """
+
+    def __init__(self, dice):
+        self._dice = dice
+        self._meter = []
+        self._maximums = []
+        self._dropped_dice_count = 0
+        for die in self._dice:
+            self._meter.append(1)
+            self._maximums.append(die.sides)
+
+    @property
+    def finished(self):
+        return self._meter == self._maximums
+
+    @property
+    def dice(self):
+        return self._dice
+
+    @property
+    def dice_count(self):
+        return len(self._meter)
+
+    @property
+    def meter(self):
+        return self._meter
+
+    @property
+    def dropped_dice(self):
+        return sorted(self._meter)[:self._dropped_dice_count]
+
+    @property
+    def dropped_dice_count(self):
+        return self._dropped_dice_count
+
+    def drop_die(self):
+        """ Record that one more die should be dropped. """
+        self._dropped_dice_count += 1
+
+    def reset(self):
+        """ Reset the diedometer back to the starting point. """
+        self._meter = []
+        for die in self._dice:
+            self._meter.append(1)
+
+    def increment(self):
+        """ Increment the diedometer, rolling over digits and incrementing
+        the one next to them as necessary. """
+        if not self.finished:
+            self._dropped_dice_count = 0
+            rolled_over = True
+            for i in reversed(range(0, self.dice_count)):
+                if rolled_over:
+                    if self._meter[i] == self._maximums[i]:
+                        self._meter[i] = 1
+                    else:
+                        self._meter[i] += 1
+                        rolled_over = False
+
+    @property
+    def result(self):
+        """ Return the total value for the meter's current state, adjusting
+        for any dropped dice. """
+        sorted_dice = sorted(self._meter)
+        total = 0
+        for die in sorted_dice[self._dropped_dice_count:]:
+            total += die
+        return total
+
+
+
+
+
+
