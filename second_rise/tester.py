@@ -356,7 +356,7 @@ print('        verbose: {}'.format(test.__str__(True)))
 print('    Clearing history...')
 test.clear_history()
 print('        history: {}'.format(test.history))
-test = dice.Range(3,22,3)
+test = dice.Range(3, 22, 3)
 print('    range 3-22 (3D10) rolled 5 times...')
 for i in range(1, 6):
     test.roll()
@@ -404,7 +404,7 @@ print('        history: {}'.format(test.history))
 print('        set 1d20 + 3d10 + 2d5 + 2d4+ 1d2 __str__: {}'.format(test))
 print('        verbose: {}'.format(test.__str__(True)))
 for die in test.dice:
-    print('Average for d{} is {}'.format(die.sides,die.average))
+    print('Average for d{} is {}'.format(die.sides, die.average))
 print('Testing Diedometer...')
 test = dice_set.DiceSet()
 test.add_die(dice.D10())
@@ -461,5 +461,3 @@ while not meter.finished:
     #                                                   meter.result,
     #                                                   meter.dropped_dice))
 print('    done...')
-
-

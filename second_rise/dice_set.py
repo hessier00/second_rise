@@ -84,6 +84,8 @@ class DiceSet(object):
 
     @property
     def result(self):
+        if not self.rolled:
+            return 0
         total = 0
         for die in self._dice:
             total += die.result
@@ -255,7 +257,7 @@ class SetStats(object):
         for result in self._stats_dict:
             total += (result * self._stats_dict[result]['count'])
         average = total / self._combo_count
-        #print('Average: {}'.format(average))
+        # print('Average: {}'.format(average))
         self._average = average
 
     @property
@@ -313,9 +315,9 @@ class Diedometer(object):
 
     Attributes:
         _dice: a list of Die objects containing the dice assigned to the
-        diedomoeter.
+        diedometer.
         _maximums: a list of the maximum values of each die assigned to the
-        diedomoter.
+        diedometer.
         _meter: a list of integer values used to represent a set of die
         states (die 1 = 3, die 2 = 6, etc.).
         _dropped_dice_count: an integer representing the number of dice
@@ -334,8 +336,8 @@ class Diedometer(object):
         self._maximums = []
         self._dropped_dice_count = 0
         for die in self._dice:
-            self._meter.append(1)
-            self._maximums.append(die.sides)
+            self._meter.append(die.minimum)
+            self._maximums.append(die.maximum)
 
     @property
     def finished(self):
@@ -394,9 +396,3 @@ class Diedometer(object):
         for die in sorted_dice[self._dropped_dice_count:]:
             total += die
         return total
-
-
-
-
-
-
