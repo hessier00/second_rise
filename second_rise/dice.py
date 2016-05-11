@@ -214,6 +214,11 @@ class Percentile(Die):
         return sides
 
     @property
+    def maximum(self):
+        """ Get the die's maximum value."""
+        return self._minimum + self.sides - 1
+
+    @property
     def average(self):
         """ Calculate and return the average roll result of a percentile-style
         compound dice, including accounting for min-1 versus min-0 dice.
@@ -233,16 +238,6 @@ class Percentile(Die):
     def ones(self):
         """ Return the d10 used to represent the ones-digit. """
         return self.dice[0]
-
-    @property
-    def minimum(self):
-        """ Return the minimum roll result. """
-        return self._minimum
-
-    @property
-    def maximum(self):
-        """ Return the maximum roll result. """
-        return self.minimum + self.sides - 1
 
     @property
     def result(self):
@@ -309,7 +304,7 @@ class D10000(D1000):
         return self._dice[3]
 
 
-class Range(object):
+class Range(Die):
     """ Represents a dice-result range, constructed from modifiers and one or
     more d10.
 
@@ -325,6 +320,7 @@ class Range(object):
         Add result _future_, and undo/redo (future is what the current roll
         would become if you undo to a step back in _history.
         Add result probability table.
+        Add averages
     """
 
     def __init__(self, minimum, maximum, dice_count=0):
@@ -345,17 +341,9 @@ class Range(object):
     def minimum(self):
         return self._minimum
 
-    @minimum.setter
-    def minimum(self, minimum):
-        self._minimum = minimum
-
     @property
     def maximum(self):
         return self._maximum
-
-    @maximum.setter
-    def maximum(self, maximum):
-        self._maximum = maximum
 
     @property
     def dice(self):
@@ -367,19 +355,6 @@ class Range(object):
         the range.
         """
         return len(self._dice)
-
-    @dice_count.setter
-    def dice_count(self, dice_count):
-        """ Change the number of dice assigned to generate values within
-        the range.
-        """
-        self._dice = []
-        for i in range(1, dice_count):
-            self._dice.append(D10())
-
-    @property
-    def dice(self):
-        return self._dice
 
     @property
     def rolled(self):
@@ -399,6 +374,16 @@ class Range(object):
                 answer = False
         return answer
 
+    @property
+    def sides(self):
+        """ In this case 'sides' is just hte number of possible results. """
+        return self.maximum - self.minimum + 1
+
+    @property
+    def average(self):
+        """ This has to be based on stats due to uneven distribution. """
+        return 0
+
     def roll(self):
         """ Rolls both d10 to generate a percentile score. """
         if self.rolled:
@@ -412,7 +397,7 @@ class Range(object):
         """
         sorted(self._dice, key=lambda die: die.result)
 
-    def build_total(self, dice_to_exclude=0):
+    def _build_total(self, dice_to_exclude=0):
         """ Total all dice results, minus any that have been excluded."""
         if not self.rolled:
             return 0
@@ -426,26 +411,18 @@ class Range(object):
         """ Compute the result of a roll made 'against' the range. """
         dice_to_exclude = 0
         # Total the values of the rolled dice
-        total = self.build_total(0)
+        total = self._build_total(0)
         # If the total is greater than the maximum, iteratively exclude the
         # die with the lowest value until the total is not greater than the
         # maximum.
         while total > self._maximum:
             dice_to_exclude += 1
-            total = self.build_total(dice_to_exclude)
+            total = self._build_total(dice_to_exclude)
         # If the total is _less_ than the minimum, but not zero,
         # set it to the  minimum
         if 0 < total <= self._minimum:
             total = self.minimum
         return total
-
-    @property
-    def history(self):
-        return self._history
-
-    def clear_history(self):
-        """ Clears the die's roll history. """
-        self._history = []
 
     def __str__(self, verbose=False):
         """ Return either the die value as a string (terse) or a more
@@ -461,6 +438,3 @@ class Range(object):
                                                       self.maximum,
                                                       self.dice_count,
                                                       self.result)
-
-    def __unicode__(self, verbose=False):
-        return self.__str__(verbose)
