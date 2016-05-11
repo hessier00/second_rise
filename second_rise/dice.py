@@ -75,11 +75,6 @@ class Die(object):
         """Get the die's minimum value. """
         return self._minimum
 
-    @minimum.setter
-    def minimum(self, new_minimum):
-        """ Set a new minimum value for the die. """
-        self._minimum = new_minimum
-
     @property
     def maximum(self):
         """ Get the die's maximum value."""
@@ -243,13 +238,6 @@ class Percentile(Die):
     def minimum(self):
         """ Return the minimum roll result. """
         return self._minimum
-
-    @minimum.setter
-    def minimum(self, new_minimum):
-        """ Set a new minimum value for the percentile dice.  1 or 0 only. """
-        if new_minimum != 0:
-            new_minimum = 1
-        self._minimum = new_minimum
 
     @property
     def maximum(self):
