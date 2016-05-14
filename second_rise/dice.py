@@ -10,6 +10,11 @@ MOD_OPERATORS = {'PLUS': operator.add,
                  '-': operator.sub,
                  '*': operator.mul,
                  '/': operator.truediv}
+""" To Do:
+        + Add module-level methods for outputting dice notation from a Die,
+        Dice_Set, or Range and for generating the reverse - a Die, Dice_set,
+        or Range object from dice notation in string form.
+"""
 
 
 class Die(object):
@@ -18,29 +23,28 @@ class Die(object):
     Attributes:
         _sides: an integer representing the number of sides on the die.
         _result: an integer representing the last rolled value of the die.
-        _minimum: an integer representing the lowest value the dice can
-            generate.  The maximum is therefore self._minimum + self._sides -1.
+        _history: a list of integers representing the die's past roll results.
+        _stats: a dictionary containing each possible result the die can
+        generate, as well as it's chance of occurring.
 
     To Do:
         Add result _future_, and undo/redo (future is what the current roll
         would become if you undo to a step back in _history.
     """
-    def __init__(self, sides, minimum=1):
+    def __init__(self, sides):
         """ Build a new die.  Ignore all 'sides' argument values other than but
         positive integers.  For invalid 'sides' arguments, set the side count to
         0, to represent an error/misconfiguration state.
 
         Arguments:
             sides (int): the number of sides on the die.
-            minimum (int): an integer representing the lowest value the dice
-            can generate.
         """
         self._sides = 0
         self._result = None
-        self._minimum = minimum
         if sides > 0:
             self._sides = sides
         self._history = []
+        self._stats = DiceStats([self])
 
     @property
     def valid(self):
@@ -63,7 +67,7 @@ class Die(object):
         if not self.valid:
             return 0
         else:
-            return (self._sides + 1) / 2
+            return (self.sides + 1) / 2
 
     @property
     def result(self):
@@ -71,14 +75,14 @@ class Die(object):
         return self._result
 
     @property
-    def minimum(self):
-        """Get the die's minimum value. """
-        return self._minimum
+    def stats(self):
+        """ Get the die's stats dictionary, containing the probability of
+        each possible result. """
+        return self._stats
 
-    @property
-    def maximum(self):
-        """ Get the die's maximum value."""
-        return self._minimum + self._sides - 1
+    def describe(self):
+        """ Return a string describing this die in standard notation. """
+        return "d{}".format(self.sides)
 
     def roll(self):
         """ 'Roll' the dice and store the result. move any previous results
@@ -86,14 +90,15 @@ class Die(object):
         """
         if self.rolled:
             self._history.append(self.result)
-        self._result = random.randint(1, self._sides) + self._minimum - 1
+        self._result = random.randint(1, self.sides)
 
     @property
     def history(self):
+        """ Return the die's roll result history. """
         return self._history
 
     def clear_history(self):
-        """ Clears the die' roll history. """
+        """ Clear the die's roll history. """
         self._history = []
 
     def __str__(self, verbose=False):
@@ -146,36 +151,33 @@ class D100(Die):
 
 class Percentile(Die):
     """ A compound dice construct, using two D10 objects to generate a range
-    of results from either 0-99 or 1-100, using one die as the tens digit and
+    of results from 1-100, using one die as the tens digit and
     one die as the ones digit.
 
     Attributes:
-        _minimum: an integer representing the the minimum value of a roll -
-        either 1 or 0.
         _dice: a list holding the individual Die objects that comprise the
         compound dice construct.
         _history: a list containing all previous roll results
-        _average: the average roll result for the compound die.
+        _stats: a dictionary containing each possible result the compound
+        die construct can generate, as well as its chance of occurring.
 
     To Do:
         Add result _future_, and undo/redo (future is what the current roll
         would become if you undo to a step back in _history.
     """
-    def __init__(self, minimum=1):
-        # Minimum can only be 0 or 1.  Some systems use percentile dice to
-        # represent 0-99 instead of 1-100.  Using minimum = 0 allows the
-        # alternate use.  Only minimum values of 0 and 1 are allowed.
-        if minimum != 0:
-            minimum = 1
-        self._minimum = minimum
-        self._dice = [D10(), D10()]
-        # self._dice.append(D10())
-        # self._dice.append(D10())
+    def __init__(self, dice=None):
+        if dice is None:
+            dice = []
+        dice.extend([D10(), D10()])
+        self._dice = dice
         self._average = 0
         self._history = []
+        self._stats = DiceStats([self])
 
     def roll(self):
-        """ Rolls both d10 to generate a percentile score. """
+        """ Roll the d10s that make up the compound dice to generate a
+        percentile score.
+        """
         if self.rolled:
             self._history.append(self.result)
         for die in self._dice:
@@ -185,6 +187,11 @@ class Percentile(Die):
     def dice(self):
         """ Return the dice that make up the compound die. """
         return self._dice
+
+    @property
+    def dice_count(self):
+        """ Return the number of dice making up the compound die. """
+        return len(self.dice)
 
     @property
     def rolled(self):
@@ -213,21 +220,26 @@ class Percentile(Die):
             sides *= die.sides
         return sides
 
-    @property
-    def maximum(self):
-        """ Get the die's maximum value."""
-        return self._minimum + self.sides - 1
+    def describe(self):
+        """ Return a string describing the compound die in standard
+        dice notation.
+        """
+        return "d{}(%)".format(self.sides)
 
     @property
     def average(self):
         """ Calculate and return the average roll result of a percentile-style
         compound dice, including accounting for min-1 versus min-0 dice.
         """
-        if self.minimum == 1:
-            modifier = 1
-        else:
-            modifier = -1
-        return (self.sides + modifier) / 2
+        if not self.valid:
+            return 0
+        return (self.sides + 1) / 2
+
+    @property
+    def stats(self):
+        """ Get the die's stats dictionary, containing the probability of
+        each possible result. """
+        return self._stats
 
     @property
     def tens(self):
@@ -259,10 +271,18 @@ class Percentile(Die):
             total += die_value * multiplier
             # Adjust the multiplier to represent the next digit
             multiplier *= 10
-        if total == self.maximum and self._minimum == 0:
-            return 0
-        else:
-            return total
+        if total == 0:
+            total = self.sides
+        return total
+
+    @property
+    def history(self):
+        """ Return the die's roll result history. """
+        return self._history
+
+    def clear_history(self):
+        """ Clear the die' roll history. """
+        self._history = []
 
     def __str__(self, verbose=False):
         """ Return either the die value as a string (terse) or a more
@@ -279,12 +299,18 @@ class Percentile(Die):
             side_count *= die.sides
         return 'd{}: {}'.format(side_count, self.result)
 
+    def __unicode__(self, verbose=False):
+        return self.__str__(verbose)
+
 
 class D1000(Percentile):
     """ A compound dice for generating 0-999 or 1-1000 using three d10."""
-    def __init__(self, minimum=1):
-        Percentile.__init__(self, minimum)
-        self._dice.append(D10())
+    def __init__(self, dice=None):
+        if not dice:
+            dice = []
+        dice.append(D10())
+        self._dice = dice
+        Percentile.__init__(self, dice)
 
     @property
     def hundreds(self):
@@ -294,9 +320,12 @@ class D1000(Percentile):
 
 class D10000(D1000):
     """ A compound dice for generating 0-9999 or 1-10000 using four d10."""
-    def __init__(self, minimum=1):
-        D1000.__init__(self, minimum)
-        self._dice.append(D10())
+    def __init__(self, dice=None):
+        if not dice:
+            dice = []
+        dice.append(D10())
+        self._dice = dice
+        D1000.__init__(self, dice)
 
     @property
     def thousands(self):
@@ -304,7 +333,178 @@ class D10000(D1000):
         return self._dice[3]
 
 
-class Range(Die):
+class DiceSet(object):
+    """ Contains a set of dice, to be rolled together and their results
+    totaled. The total can then be modified.
+
+    Attributes:
+        _dice: a list containing the Die instances included in the dice set.
+        _modifier: an integer representing the modifier value to be applied to
+        the dice set's total.
+        _modifier_operator: a string representing the type of mathematical
+        operation to perform with the modifier and the dice set's roll result.
+        _stats: a dictionary containing frequency and chance of the
+        occurrence of each possible total that can result from rolling the
+        dice set.
+
+    To Do:
+        Add result _future_, and undo/redo (future is what the current roll
+        would become if you undo to a step back in _history.
+    """
+
+    def __init__(self,
+                 modifier=0,
+                 modifier_operator=MOD_OPERATORS['+'],
+                 dice=None):
+        self._modifier = modifier
+        self._modifier_operator = modifier_operator
+        if not dice:
+            self._dice = []
+        else:
+            self._dice = dice
+            self._history = []
+        self._stats = DiceStats(dice=self._dice,
+                                modifier=self._modifier,
+                                mod_op=self._modifier_operator)
+
+    @property
+    def dice(self):
+        """ Return the list of Die objects that make up the dice set. """
+        return self._dice
+
+    @property
+    def modifier(self):
+        """ Return the dice set's modifier"""
+        return self._modifier
+
+    @property
+    def modifier_operator(self):
+        """ Return the dice set's modifier operation. """
+        return self._modifier_operator
+
+    def roll(self):
+        """ Roll all the dice in the set, saving any previous results as
+        history.
+        """
+        if self.rolled:
+            self._history.append(self.result)
+        for die in self.dice:
+            die.roll()
+
+    @property
+    def result(self):
+        """ Calculate and return the most recent result of rolling the dice
+        set. """
+        if not self.rolled:
+            return 0
+        total = 0
+        for die in self.dice:
+            total += die.result
+        total = self.modifier_operator(total, self.modifier)
+        return total
+
+    @property
+    def rolled(self):
+        """ Check to see if all dice have been rolled """
+        answer = True
+        for die in self.dice:
+            if not die.rolled:
+                answer = False
+        return answer
+
+    @property
+    def valid(self):
+        """ Check to ensure that all dice have a valid number of sides. """
+        answer = True
+        for die in self.dice:
+            if not die.valid:
+                answer = False
+        return answer
+
+    @property
+    def dice_count(self):
+        """ Return the number of dice included in the dice set. """
+        return len(self.dice)
+
+    @property
+    def average(self):
+        """ Return the dice set's average roll result.
+
+        To Do:
+            THIS
+        """
+        return 0
+
+    @property
+    def minimum(self):
+        """ Return the minimum value that can be rolled with this dice set. """
+        total = 0
+        for _ in self.dice:
+            total += 1
+        return self.modifier_operator(total, self.modifier)
+
+    @property
+    def maximum(self):
+        """ Return the maximum value that can be rolled with this dice set. """
+        total = 0
+        for die in self.dice:
+            total += die.sides
+        return self.modifier_operator(total, self.modifier)
+
+    @property
+    def stats(self):
+        """ Return the dice set's stats dictionary. """
+        return self._stats
+
+    def dice_sort(self):
+        """ Sort the dice in self._dice by value, placing the
+        highest at [0].
+        """
+        sorted(self._dice, key=lambda die: die.result)
+
+    def describe(self):
+        """ Generate a string description of the dice in the set using
+        standard dice notation, i.e. '3d10+4d6+3d5' """
+        if not self.valid:
+            return ""
+        dice_counts = {}
+        for die in self.dice:
+            if die.sides not in dice_counts.keys():
+                dice_counts[die.sides] = 1
+            else:
+                dice_counts[die.sides] += 1
+        dice_list = []
+        for die_type in dice_counts:
+            dice_list.append([die_type, dice_counts[die_type]])
+            dice_list.sort(reverse=True)
+        description = '{}d{}'.format(dice_list[0][1], dice_list[0][0])
+        for die_type in dice_list[1:]:
+            description += '+{}d{}'.format(die_type[1], die_type[0])
+        return description
+
+    @property
+    def history(self):
+        """ Return the dice set's roll result history. """
+        return self._history
+
+    def clear_history(self):
+        """ Clear the dice set's roll history. """
+        self._history = []
+
+    def __str__(self, verbose=False):
+        """ Return either the die value as a string (terse) or a more
+        detailed response (verbose).
+
+        Arguments:
+            verbose: a boolean value representing whether or not the return
+            value should be verbose.
+        """
+        if not verbose:
+            return str(self.result)
+        return '{}: {}'.format(self.describe(), self.result)
+
+
+class Range(DiceSet):
     """ Represents a dice-result range, constructed from modifiers and one or
     more d10.
 
@@ -315,20 +515,24 @@ class Range(Die):
         by the range.  Maximum must be higher than minimum.
         _dice: a list containing the Die.D10 objects used to generate values
         within the range.
+        _stats: a dictionary containing frequency and chance of the
+        occurrence of each possible total that can result from rolling the
+        dice set.
 
     To Do:
         Add result _future_, and undo/redo (future is what the current roll
         would become if you undo to a step back in _history.
-        Add result probability table.
-        Add averages
     """
 
     def __init__(self, minimum, maximum, dice_count=0):
+        # Force the minimum to be at least 1
+        if minimum < 1:
+            minimum = 1
         # Force maximum to be greater than minimum.
         if maximum <= minimum:
             maximum = minimum + 1
-        # Set default dice value to be equal to the minimum.
-        if dice_count == 0:
+        # The dice_count can't be less than 1.
+        if dice_count < 1:
             dice_count = minimum
         self._minimum = minimum
         self._maximum = maximum
@@ -336,6 +540,9 @@ class Range(Die):
         for i in range(0, dice_count):
             self._dice.append(D10())
         self._history = []
+        self._stats = DiceStats(dice=self._dice,
+                                minimum=self._minimum,
+                                maximum=self._maximum)
 
     @property
     def minimum(self):
@@ -346,56 +553,23 @@ class Range(Die):
         return self._maximum
 
     @property
-    def dice(self):
-        return self._dice
-
-    @property
-    def dice_count(self):
-        """ Return the number of dice assigned to generate values within
-        the range.
+    def modifier(self):
+        """ Ranges do not have modifiers, but the existing method fro
+        DiceSet needs to be overridden.
         """
-        return len(self._dice)
+        return 0
 
     @property
-    def rolled(self):
-        """ Check to see if both dice have been rolled """
-        answer = True
-        for die in self.dice:
-            if not die.rolled:
-                answer = False
-        return answer
-
-    @property
-    def valid(self):
-        """ Check to ensure that both dice have a valid number of sides. """
-        answer = True
-        for die in self.dice:
-            if not die.valid:
-                answer = False
-        return answer
-
-    @property
-    def sides(self):
-        """ In this case 'sides' is just hte number of possible results. """
-        return self.maximum - self.minimum + 1
+    def mod_operator(self):
+        """ Ranges do not have modifiers, but the existing method fro
+        DiceSet needs to be overridden.
+        """
+        return MOD_OPERATORS['+']
 
     @property
     def average(self):
         """ This has to be based on stats due to uneven distribution. """
         return 0
-
-    def roll(self):
-        """ Rolls both d10 to generate a percentile score. """
-        if self.rolled:
-            self._history.append(self.result)
-        for die in self._dice:
-            die.roll()
-
-    def dice_sort(self):
-        """ Sort the dice in self._dice by value, placing the
-        highest at [0].
-        """
-        sorted(self._dice, key=lambda die: die.result)
 
     def _build_total(self, dice_to_exclude=0):
         """ Total all dice results, minus any that have been excluded."""
@@ -405,6 +579,13 @@ class Range(Die):
         for die in self._dice[dice_to_exclude:len(self._dice)]:
             total += die.result
         return total
+
+    def describe(self):
+        """ Return a string describing the range. """
+        description = 'R{}-{}'.format(self.minimum, self.maximum)
+        if self.dice_count != self.minimum:
+            description += '({}d10)'.format(self.dice_count)
+        return description
 
     @property
     def result(self):
@@ -424,6 +605,11 @@ class Range(Die):
             total = self.minimum
         return total
 
+    @property
+    def stats(self):
+        """ Return the ranges's stats dictionary. """
+        return self._stats
+
     def __str__(self, verbose=False):
         """ Return either the die value as a string (terse) or a more
         detailed response (verbose).
@@ -438,3 +624,217 @@ class Range(Die):
                                                       self.maximum,
                                                       self.dice_count,
                                                       self.result)
+
+
+class Diedometer(object):
+    """ Iterates through all possible combinations of the dice in a set of
+    dice.  Works in the same way an odometer iterates through all combinations
+    of the numbers on its dials.
+
+    Attributes:
+        _dice: a list of Die objects containing the dice assigned to the
+        diedometer.
+        _maximums: a list of the maximum values of each die assigned to the
+        diedometer.
+        _meter: a list of integer values used to represent a set of die
+        states (die 1 = 3, die 2 = 6, etc.).
+
+    To Do:
+        __str__/__unicode__
+    """
+
+    def __init__(self, dice):
+        self._dice = dice
+        self._meter = []
+        self._maximums = []
+        for die in self._dice:
+            self._meter.append(1)
+            self._maximums.append(die.sides)
+        self._meter[-1] = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        """ Increment the diedometer, rolling over digits and incrementing
+        the one next to them as necessary. """
+        if self._meter == self._maximums:
+            raise StopIteration
+        rolled_over = True
+        for die in reversed(range(0, len(self._dice))):
+            if rolled_over:
+                if self._meter[die] == self._maximums[die]:
+                    self._meter[die] = 1
+                else:
+                    self._meter[die] += 1
+                    rolled_over = False
+        return ResultSet(self._meter)
+
+    def __len__(self):
+        """ Return the number of combos possible for the diedometer. """
+        length = 1
+        for num in self._maximums:
+            length *= num
+        return length
+
+
+class ResultSet(object):
+    """ Hold and calculate totals for a single set of die values generated by
+    a Diedomoter object.
+
+    Attributes:
+        _results: a list of ints representing a set of dice result values.
+        _dropped_dice_count: an integer representing the number of dice that
+        have been dropped from a result set to get the result under the roll's
+        declared maximum.
+
+    To Do:
+        __str__() and __unicode__()
+    """
+    def __init__(self, results):
+        self._results = results
+        self._dropped_dice_count = 0
+
+    def drop_die(self):
+        self._dropped_dice_count += 1
+
+    @property
+    def result(self):
+        """ Return the total value for self._meter's current state, adjusting
+        for any dropped dice. """
+        sorted_dice = sorted(self._results)
+        total = 0
+        for die in sorted_dice[self._dropped_dice_count:]:
+            total += die
+        return total
+
+    @property
+    def dropped(self):
+        """ Return a list of the die results that have been dropped. """
+        return self._results[self._dropped_dice_count:]
+
+    def undrop_all(self):
+        """ Reset the result to no dropped dice. """
+        self._dropped_dice_count = 0
+
+
+class DiceStats(object):
+    """ Calculate and store stats about the possible results of a dice set.
+
+    Attributes:
+        _stats_dict: a dictionary containing the possible roll
+        results for the dice set, along with their frequency and
+        chance of occurring.
+        _combo_count: an integer containing the total number of possible
+        roll combinations
+        _average: a number representing the average roll result for the dice
+        set.
+
+    To Do:
+        improve sorting
+    """
+
+    def __init__(self,
+                 dice,
+                 modifier=0,
+                 mod_op=MOD_OPERATORS['PLUS'],
+                 minimum=1,
+                 maximum=0):
+        self._stats_dict = {}
+        self._meter = Diedometer(dice)
+        self._modifier = modifier
+        self._mod_op = mod_op
+        self._minimum = minimum
+        self._maximum = maximum
+        self._combo_count = 0
+        self._average = 0
+        self._dropped_dice = 0
+        self._generate_stats()
+        self._calculate_average()
+
+    def _generate_stats(self):
+        """ Generate the count of occurrences of each possible
+        result total for the dice set, along with the chance of it occurring.
+        """
+        self._combo_count = 1
+        for combo in self._meter:
+            if self._maximum > 0:
+                while combo.result > self._maximum:
+                    combo.drop_die()
+            result = self._mod_op(combo.result, self._modifier)
+            if result < self._minimum:
+                result = self._minimum
+            if result not in self._stats_dict.keys():
+                self._stats_dict[result] = {'count': 1, 'chance': 0.0}
+            else:
+                self._stats_dict[result]['count'] += 1
+        self._combo_count = len(self._meter)
+        for key in self._stats_dict.keys():
+            self._stats_dict[key]['chance'] = \
+                self._stats_dict[key]['count'] / self._combo_count
+
+    def _calculate_average(self):
+        """ Calculate the average roll result for the dice_set and store it. """
+        if not self._stats_dict:
+            return
+        total = 0
+        for result in self._stats_dict:
+            total += (result * self._stats_dict[result]['count'])
+        average = total / self._combo_count
+        self._average = average
+
+    @property
+    def combo_count(self):
+        """ Return the number of different possible combination possible for
+        the die or set of dice.
+        """
+        return self._combo_count
+
+    @property
+    def average(self):
+        """ Return the average rol result. """
+        return self._average
+
+    @property
+    def stats_dict(self):
+        """ Return the stats dictionary. """
+        return self._stats_dict
+
+    def chance_of(self, result):
+        """ Return the chance of rolling a particular result with the dice
+        set.
+
+        Arguments:
+            result: an int representing the result for which the chance of
+            rolling it has been requested.
+        """
+        if not self._stats_dict:
+            return 0
+        return self._stats_dict[result]['chance']
+
+    def csv(self):
+        """ Return a version of of the stats dictionary suitable for
+        outputting to a CSV file.
+        """
+        output = 'Result, Count, Chance\n'
+        for key in self._stats_dict:
+            output += ('{}, {}, {:.8f}\n'
+                       .format(key,
+                               self._stats_dict[key]['count'],
+                               self._stats_dict[key]['chance']))
+        return output
+
+    def __str__(self, verbose=False):
+        """ Return a human-readable version of of the stats dictionary."""
+        output = 'Roll-result average: {}'.format(self._average)
+        if verbose:
+            output += '\nDice combinations: {}\n'.format(self._combo_count)
+            for key in self._stats_dict:
+                output += ('{}: {} - {:.2%}\n'
+                           .format(key,
+                                   self._stats_dict[key]['count'],
+                                   self._stats_dict[key]['chance']))
+        return output
+
+    def __unicode__(self, verbose=False):
+        self.__str__(verbose)
