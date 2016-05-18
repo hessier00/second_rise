@@ -1,4 +1,5 @@
 import dice
+import stats
 #
 #
 # print("Testing: dice")
@@ -506,3 +507,44 @@ print('        stats dictionary: {}'.format(test.stats.stats_dict))
 print('        possible combinations: {}'.format(test.stats.combo_count))
 print('        average result: {}'.format(test.stats.average))
 print('        stats table:\n{}\n'.format(test.stats.csv()))
+
+print('Testing Modifiers...')
+print('   Creating new modifier 5 (default operator: +)...')
+source = "nothing"
+test = stats.Modifier(source, 5)
+print('       stats.Modifier(5) __str__(): {}\n'.format(test.__str__()))
+print('   Creating new modifier +15 ...')
+test = stats.Modifier(source, 15, dice.MOD_OPERATORS['+'])
+print('       stats.Modifier(5) __str__(): {}\n'.format(test.__str__()))
+print('   Creating new modifier -7 ...')
+test = stats.Modifier(source, 7, dice.MOD_OPERATORS['-'])
+print('       stats.Modifier(5) __str__(): {}\n'.format(test.__str__()))
+print('   Creating new modifier *1.2 ...')
+test = stats.Modifier(source, 1.2, dice.MOD_OPERATORS['*'])
+print('       stats.Modifier(5) __str__(): {}\n'.format(test.__str__()))
+print('   Creating new modifier /1.1 ...')
+test = stats.Modifier(source, 1.1, dice.MOD_OPERATORS['/'])
+print('       stats.Modifier(5) __str__(): {}\n'.format(test.__str__()))
+
+print('Testing ModifierSets...')
+print('   Creating new set with 10 modifiers...')
+test = stats.ModifierSet([stats.Modifier(source, 5),
+                          stats.Modifier(source, 1.2, dice.MOD_OPERATORS['/']),
+                          stats.Modifier(source, 10, dice.MOD_OPERATORS['-']),
+                          stats.Modifier(source, 5, stats.add_percent),
+                          stats.Modifier(source, 15, stats.add_percent),
+                          stats.Modifier(source, 1.05, dice.MOD_OPERATORS['*']),
+                          stats.Modifier(source, 2, dice.MOD_OPERATORS['-']),
+                          stats.Modifier(source, 12, dice.MOD_OPERATORS['+']),
+                          stats.Modifier(source, 1.1, dice.MOD_OPERATORS['*']),
+                          stats.Modifier(source, 15, stats.sub_percent)])
+print('        Sorted Descriptor of ModifierSet: {}'.format(test.__str__()))
+
+print('\nTesting Stats...')
+print("    Creating new stat using previous modifiers...")
+stat_test = stats.Stat("STR",55,"Strength",test)
+print('        Stat Abbreviation: {}'.format(stat_test.abbreviation))
+print('        Stat Name: {}'.format(stat_test.name))
+print('        Stat Base Score: {}'.format(stat_test.base_score))
+print('        Stat Modified Score: {}'.format(stat_test.score))
+print('        Stat Modifiers: {}'.format(stat_test.modifiers.__str__()))

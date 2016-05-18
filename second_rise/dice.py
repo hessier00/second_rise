@@ -341,8 +341,9 @@ class DiceSet(object):
         _dice: a list containing the Die instances included in the dice set.
         _modifier: an integer representing the modifier value to be applied to
         the dice set's total.
-        _modifier_operator: a string representing the type of mathematical
-        operation to perform with the modifier and the dice set's roll result.
+        _modifier_operator: a operator function representing the type of
+        mathematical operation to perform with the modifier and the dice set's
+        roll result.
         _stats: a dictionary containing frequency and chance of the
         occurrence of each possible total that can result from rolling the
         dice set.
