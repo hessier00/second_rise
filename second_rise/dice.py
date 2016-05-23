@@ -14,6 +14,9 @@ MOD_OPERATORS = {'PLUS': operator.add,
         + Add module-level methods for outputting dice notation from a Die,
         Dice_Set, or Range and for generating the reverse - a Die, Dice_set,
         or Range object from dice notation in string form.
+        + Add a underlying "Generator" base class? - supports all common
+        methods, such as minimum, maximum, roll, valid, result, history,
+        clear history, average?
 """
 
 

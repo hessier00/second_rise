@@ -56,7 +56,7 @@ class Stat(object):
         _modifiers: a ModifierSet object containing all Modifiers assigned to
         the Stat.
     """
-    def __init__(self, abbreviation, score, name = "", modifiers=None):
+    def __init__(self, abbreviation, score, name="", modifiers=None):
         self._abbreviation = abbreviation
         self._score = math.ceil(score)
         self._name = name
@@ -117,6 +117,40 @@ class Stat(object):
         """ Return a unicode representation of the stat and its adjusted
         score. """
         return self.__str__()
+
+
+class PrimaryAttribute(Stat):
+    """ Hold, manage, generate, and update a Primary Attribute stat.
+
+    Attributes:
+        _name: a string containing the full name of the stat.
+        _abbreviation: a string containing the abbreviation of the stat's name.
+        _score: an integer representing the stat's base score
+        _modifiers: a ModifierSet object containing all Modifiers assigned to
+        the Stat.
+        _rolled: a boolean representing whether or not the attribute's
+        generation roll has been made.
+    """
+    def __init__(self, abbreviation, score=None, name="", modifiers=None):
+        if score is None:
+            self._score = 0
+            self._rolled = False
+        else:
+            self._score = score
+            self._rolled = True
+        Stat.__init__(self, abbreviation, self._score, name, modifiers)
+
+    @property
+    def rolled(self):
+        """ Report whether or not the attribute's generation roll has been
+        made.
+        """
+        return self._rolled
+
+    @staticmethod
+    def generate(self):
+        """ TO DO"""
+        return 50
 
 
 class Modifier(object):
