@@ -21,16 +21,21 @@ class Table(object):
         _generator: a Generator object used to randomly produce results from
         the table.
         _name: a string representing the human-readable name of the table.
+        _result: a TableRow object, representing the most recent result
+        rolled on the Table.
+        _history: a list of TableRow object, representing the history of
+        rolls made on the Table.  Can be combined with _generator's history
+        to recreate the history of both roll values and corresponding results.
 
     To Do:
-        + History tracking, just as with Dice
-        + validity check
+        + Add result _future_, and undo/redo (future is what the current result
+        would become if you undo to a step back in _history.
     """
     def __init__(self, entries, generator=None, name=None):
         self._entries = entries
         self._sort()
-        self._minimum = self._get_min()
-        self._maximum = self._get_max()
+        self._minimum = self._entries[0].minimum
+        self._maximum = self._entries[-1].maximum
         if generator is None:
             self._generator = dice.Die(self._maximum - self._minimum + 1)
         else:
@@ -39,6 +44,8 @@ class Table(object):
             self._name = 'Unnamed Table'
         else:
             self._name = name
+        self._result = None
+        self._history = []
 
     @property
     def minimum(self):
@@ -66,19 +73,28 @@ class Table(object):
         """ Return the table's name. """
         return self._name
 
-    def _get_min(self):
-        """ Return the lowest possible dice result that corresponds to a
-        result in the table.  This method is dependant on the table having
-        been sorted correctly.
+    @property
+    def valid(self):
+        """ Verify whether or not the minimums and maximums for each row form
+        a contiguous set of ranges.  A table is not valid if a roll result
+        could fall in between the result ranges of two neighboring rows.
         """
-        return self._entries[0].minimum
+        for i in range(1, len(self._entries)):
+            if self._entries[i].minimum != self._entries[i-1].maximum + 1:
+                return False
+        return True
 
-    def _get_max(self):
-        """ Return the highest possible dice result that corresponds to a
-        result in the table.  This method is dependant on the table having
-        been sorted correctly.
+    @property
+    def result(self):
+        """ Return the most recent result rolled on the Table. """
+        return self._result.result
+
+    @property
+    def result_row(self):
+        """ Return the TableRow object containing most recent result rolled
+        on the Table.
         """
-        return self._entries[-1].maximum
+        return self._result
 
     def _sort(self):
         """ Sort the table by the roll-result necessary to generate a result,
@@ -87,13 +103,25 @@ class Table(object):
         self._entries = sorted(self._entries, key=lambda entry: entry.minimum)
 
     def roll(self):
-        """ Generate and return a result from the table. """
+        """ Generate a result from the table. """
+        if self._result:
+            self._history.append(self._result)
         self.generator.roll()
-        result = self.generator.result
         for row in self._entries:
-            if row.minimum <= result <= row.maximum:
-                print('{},{},{}'.format(row.minimum,row.maximum,row.result))
-                return row
+            if row.minimum <= self.generator.result <= row.maximum:
+                self._result = row
+
+    @property
+    def history(self):
+        """ Return the table's result history. """
+        return self._history
+
+    def clear_history(self):
+        """ Clear the table's result history. To maintain synchronization,
+        the table's generator's history is also cleared.
+        """
+        self._history = []
+        self._generator.clear_history()
 
     def __str__(self, digits=0):
         left_col = (digits * 2) + 6
@@ -103,7 +131,7 @@ class Table(object):
             output += row.__str__(digits)+'\n'
         return output
 
-    def __unicode__(self, digits = 0):
+    def __unicode__(self, digits=0):
         return self.__str__(digits)
 
 
